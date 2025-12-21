@@ -547,7 +547,7 @@ export default {
                     teamId: 2,
                     x: 70,
                     y: 75,
-                    firstName: 'أنس ',
+                    firstName: 'anas ',
                     lastName: 'صلاح الدين',
                     position: 'Defender',
                     number: '34',
