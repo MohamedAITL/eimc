@@ -1,10 +1,10 @@
 export default {
     activeTeamId: 2,
-    activePlayerId: null,
-    activeFormationId: 1,
-    mouseOverPlayerId: null,
-    playersVisible: false,
-    isLoading: true,
+  activePlayerId: null,
+  activeFormationId: 1,
+  mouseOverPlayerId: null,
+  playersVisible: false,
+  isLoading: true,
     match: {
         time: '14:00 Sun 21 Nov 2021',
         venue: 'Stamford Bridge, London',
@@ -996,4 +996,5 @@ export default {
             ],
         },
     ],
+    playerPositions: {}, // { [playerId]: { x: number, y: number } }
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 import posed from 'react-pose';
 import { useTracked, actions } from 'state';
@@ -42,14 +42,14 @@ const Player: React.FC<Props> = ({
     i,
 }) => {
     const [{ activePlayerId, mouseOverPlayerId, playersVisible }, dispatch]: any = useTracked();
+    const [dragging, setDragging] = useState(false); // <-- added dragging state
+
     let pose = playersVisible ? 'visible' : 'hidden';
     const name = firstName ? `${firstName} ${lastName}` : lastName;
 
     const handleClick = () => dispatch({ type: actions.SET_ACTIVE_PLAYER, value: id });
-
     const handleMouseOver = () =>
         !activePlayerId && dispatch({ type: actions.SET_MOUSEOVER_PLAYER, value: id });
-
     const handleMouseOut = () => !activePlayerId && dispatch({ type: actions.SET_MOUSEOUT_PLAYER });
 
     if ([mouseOverPlayerId, activePlayerId].includes(id)) {
@@ -58,14 +58,18 @@ const Player: React.FC<Props> = ({
 
     return (
         <Root
+            id={`player-${id}`}
             i={i}
             x={x}
             y={y}
             active={activePlayerId === id}
             focusing={activePlayerId}
             mouseOver={mouseOverPlayerId === id}
+            dragging={dragging} // <-- pass dragging
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
+            onMouseDown={() => setDragging(true)} // start dragging
+            onMouseUp={() => setDragging(false)} // stop dragging
             onClick={handleClick}
             visible={playersVisible}
         >
@@ -92,6 +96,7 @@ type PlayerType = {
     focusing: boolean;
     mouseOver: boolean;
     visible?: boolean;
+    dragging?: boolean; // <-- added dragging type
 };
 
 const playerInactiveStyles = css`
@@ -155,10 +160,13 @@ const Root = styled.div<PlayerType>`
     left: ${(p) => p.x}%;
     transform-style: preserve-3d;
     transform-origin: 50% 0;
-    transform: translateY(15%) ${getTransformString(defaultTransform)};
+    /* Use translate for smooth movement */
+    transform: translate(${(p) => p.x}%, ${(p) => p.y}%) translateY(15%) ${getTransformString(defaultTransform)};
     opacity: ${(p) => (p.visible ? 1 : 0)};
-    transition: all 600ms;
-    transition-delay: ${(p) => p.i * 20}ms;
+    /* Disable transition while dragging, use GPU acceleration */
+    transition: ${(p) => (p.dragging ? 'none' : 'transform 300ms ease, opacity 300ms ease')};
+    will-change: transform;
+    transition-delay: ${(p) => (p.dragging ? 0 : p.i * 20)}ms;
 
     ${(p) => !p.visible && 'pointer-events: none;'}
     ${(p) => p.focusing && !p.active && 'pointer-events: none'};
@@ -166,6 +174,7 @@ const Root = styled.div<PlayerType>`
     ${(p) => p.mouseOver && !p.active && `${Name} {${nameHoverStyles}}`}
     ${(p) => p.focusing && !p.active && playerInactiveStyles};
 `;
+
 
 const Number = styled.div<{ bgColor: string }>`
     position: absolute;
