@@ -56,6 +56,7 @@ const Players: React.FC<Props> = () => {
       {team.players.map((p, i) => (
         <Player
             {...p}
+            key={p.id}
             id={p.id}
             x={playerPositions[p.id] ? playerPositions[p.id].x : 0}
             y={playerPositions[p.id] ? playerPositions[p.id].y : 0}

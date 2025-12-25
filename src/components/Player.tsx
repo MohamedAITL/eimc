@@ -160,12 +160,9 @@ const Root = styled.div<PlayerType>`
     left: ${(p) => p.x}%;
     transform-style: preserve-3d;
     transform-origin: 50% 0;
-    /* Use translate for smooth movement */
-    transform: translate(${(p) => p.x}%, ${(p) => p.y}%) translateY(15%) ${getTransformString(defaultTransform)};
+    transform: translateY(15%) ${getTransformString(defaultTransform)};
     opacity: ${(p) => (p.visible ? 1 : 0)};
-    /* Disable transition while dragging, use GPU acceleration */
-    transition: ${(p) => (p.dragging ? 'none' : 'transform 300ms ease, opacity 300ms ease')};
-    will-change: transform;
+    transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')}; // <-- disable transition when dragging
     transition-delay: ${(p) => (p.dragging ? 0 : p.i * 20)}ms;
 
     ${(p) => !p.visible && 'pointer-events: none;'}
@@ -174,7 +171,6 @@ const Root = styled.div<PlayerType>`
     ${(p) => p.mouseOver && !p.active && `${Name} {${nameHoverStyles}}`}
     ${(p) => p.focusing && !p.active && playerInactiveStyles};
 `;
-
 
 const Number = styled.div<{ bgColor: string }>`
     position: absolute;

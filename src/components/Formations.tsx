@@ -7,7 +7,7 @@ import { useTracked, actions } from 'state';
 const Formations = () => {
     const [{ formations, activeFormationId, activeTeamId }, dispatch]: any = useTracked();
 
-    const handleClick = formationId => {
+    const handleClick = (formationId: any) => {
         dispatch({ type: actions.SET_TEAM_FORMATION, value: formationId });
     };
 
