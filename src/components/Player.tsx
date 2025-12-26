@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import posed from 'react-pose';
 import { useTracked, actions } from 'state';
@@ -22,9 +22,11 @@ const getTransformString = (styleObj: any) => {
     };
 
     let transform = '';
+
     for (let key in properties) {
         transform = `${transform}${key}${properties[key]} `;
     }
+
     return transform.trim();
 };
 
@@ -55,63 +57,58 @@ const Player: React.FC<Props> = ({
         pose = 'hover';
     }
 
-    // ===== Drag handlers =====
-    const handleDragStart = () => setDragging(true);
-    const handleDragEnd = () => setDragging(false);
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        setDragging(true);
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchmove', handleDragMove);
+        document.addEventListener('touchend', handleDragEnd);
+    };
 
-    const handleDragMove = (event: MouseEvent | TouchEvent) => {
-        if (!rootRef.current || !rootRef.current.parentElement) return;
+    const handleDragMove = (e: MouseEvent | TouchEvent) => {
+        if (!dragging || !rootRef.current) return;
 
-        // get clientX/Y
-        let clientX = 0;
-        let clientY = 0;
+        let clientX: number, clientY: number;
 
-        if ('touches' in event && event.touches.length > 0) {
-            clientX = event.touches[0].clientX;
-            clientY = event.touches[0].clientY;
-        } else if ('clientX' in event) {
-            clientX = event.clientX;
-            clientY = event.clientY;
+        if ('touches' in e && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else if ('clientX' in e) {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        } else {
+            return;
         }
 
-        const rect = rootRef.current.parentElement.getBoundingClientRect();
+        const parent = rootRef.current.parentElement;
+        if (!parent) return;
+
+        const rect = parent.getBoundingClientRect();
         const newX = ((clientX - rect.left) / rect.width) * 100;
         const newY = ((clientY - rect.top) / rect.height) * 100;
 
-        rootRef.current.style.left = newX + "%";
-        rootRef.current.style.top = newY + "%";
+        rootRef.current.style.left = `${newX}%`;
+        rootRef.current.style.top = `${newY}%`;
     };
 
-    // Attach document listeners while dragging
-    useEffect(() => {
-        if (!dragging) return;
-
-        const onMouseMove = (e: MouseEvent) => handleDragMove(e);
-        const onTouchMove = (e: TouchEvent) => handleDragMove(e);
-        const onMouseUp = () => handleDragEnd();
-        const onTouchEnd = () => handleDragEnd();
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('touchmove', onTouchMove);
-        document.addEventListener('mouseup', onMouseUp);
-        document.addEventListener('touchend', onTouchEnd);
-
-        return () => {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('touchmove', onTouchMove);
-            document.removeEventListener('mouseup', onMouseUp);
-            document.removeEventListener('touchend', onTouchEnd);
-        };
-    }, [dragging]);
+    const handleDragEnd = () => {
+        setDragging(false);
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchmove', handleDragMove);
+        document.removeEventListener('touchend', handleDragEnd);
+    };
 
     return (
         <Root
             ref={rootRef}
+            id={`player-${id}`}
             i={i}
             x={x}
             y={y}
             active={activePlayerId === id}
-            focusing={activePlayerId}
+            focusing={!!activePlayerId}
             mouseOver={mouseOverPlayerId === id}
             dragging={dragging}
             onMouseOver={handleMouseOver}
@@ -147,7 +144,6 @@ type PlayerType = {
     dragging?: boolean;
 };
 
-// ===== Styles =====
 const playerInactiveStyles = css`
     opacity: 0.33;
 `;
