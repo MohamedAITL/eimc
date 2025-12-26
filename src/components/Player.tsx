@@ -52,9 +52,8 @@ const Player: React.FC<Props> = ({
         !activePlayerId && dispatch({ type: actions.SET_MOUSEOVER_PLAYER, value: id });
     const handleMouseOut = () => !activePlayerId && dispatch({ type: actions.SET_MOUSEOUT_PLAYER });
 
-    // Touch event handlers
-    const handleTouchStart = () => setDragging(true);
-    const handleTouchEnd = () => setDragging(false);
+    const handleDragStart = () => setDragging(true);
+    const handleDragEnd = () => setDragging(false);
 
     if ([mouseOverPlayerId, activePlayerId].includes(id)) {
         pose = 'hover';
@@ -72,10 +71,10 @@ const Player: React.FC<Props> = ({
             dragging={dragging}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            onMouseDown={() => setDragging(true)}
-            onMouseUp={() => setDragging(false)}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleDragStart}
+            onMouseUp={handleDragEnd}
+            onTouchStart={handleDragStart}
+            onTouchEnd={handleDragEnd}
             onClick={handleClick}
             visible={playersVisible}
         >
@@ -173,6 +172,7 @@ const Root = styled.div<PlayerType>`
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
 
     ${(p) => !p.visible && 'pointer-events: none;'}
     ${(p) => p.focusing && !p.active && 'pointer-events: none'};
