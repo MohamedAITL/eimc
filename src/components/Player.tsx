@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 import posed from 'react-pose';
 import { useTracked, actions } from 'state';
@@ -43,7 +43,6 @@ const Player: React.FC<Props> = ({
 }) => {
     const [{ activePlayerId, mouseOverPlayerId, playersVisible }, dispatch]: any = useTracked();
     const [dragging, setDragging] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
 
     let pose = playersVisible ? 'visible' : 'hidden';
     const name = firstName ? `${firstName} ${lastName}` : lastName;
@@ -53,68 +52,30 @@ const Player: React.FC<Props> = ({
         !activePlayerId && dispatch({ type: actions.SET_MOUSEOVER_PLAYER, value: id });
     const handleMouseOut = () => !activePlayerId && dispatch({ type: actions.SET_MOUSEOUT_PLAYER });
 
+    // Touch event handlers
+    const handleTouchStart = () => setDragging(true);
+    const handleTouchEnd = () => setDragging(false);
+
     if ([mouseOverPlayerId, activePlayerId].includes(id)) {
         pose = 'hover';
     }
 
-    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-        e.preventDefault();
-        setDragging(true);
-        document.addEventListener('mousemove', handleDragMove);
-        document.addEventListener('mouseup', handleDragEnd);
-        document.addEventListener('touchmove', handleDragMove);
-        document.addEventListener('touchend', handleDragEnd);
-    };
-
-    const handleDragMove = (e: MouseEvent | TouchEvent) => {
-        if (!dragging || !rootRef.current) return;
-
-        let clientX: number, clientY: number;
-
-        if ('touches' in e && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else if ('clientX' in e) {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        } else {
-            return;
-        }
-
-        const parent = rootRef.current.parentElement;
-        if (!parent) return;
-
-        const rect = parent.getBoundingClientRect();
-        const newX = ((clientX - rect.left) / rect.width) * 100;
-        const newY = ((clientY - rect.top) / rect.height) * 100;
-
-        rootRef.current.style.left = `${newX}%`;
-        rootRef.current.style.top = `${newY}%`;
-    };
-
-    const handleDragEnd = () => {
-        setDragging(false);
-        document.removeEventListener('mousemove', handleDragMove);
-        document.removeEventListener('mouseup', handleDragEnd);
-        document.removeEventListener('touchmove', handleDragMove);
-        document.removeEventListener('touchend', handleDragEnd);
-    };
-
     return (
         <Root
-            ref={rootRef}
             id={`player-${id}`}
             i={i}
             x={x}
             y={y}
             active={activePlayerId === id}
-            focusing={!!activePlayerId}
+            focusing={activePlayerId}
             mouseOver={mouseOverPlayerId === id}
             dragging={dragging}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
+            onMouseDown={() => setDragging(true)}
+            onMouseUp={() => setDragging(false)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onClick={handleClick}
             visible={playersVisible}
         >
@@ -209,6 +170,9 @@ const Root = styled.div<PlayerType>`
     opacity: ${(p) => (p.visible ? 1 : 0)};
     transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')};
     transition-delay: ${(p) => (p.dragging ? 0 : p.i * 20)}ms;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 
     ${(p) => !p.visible && 'pointer-events: none;'}
     ${(p) => p.focusing && !p.active && 'pointer-events: none'};
