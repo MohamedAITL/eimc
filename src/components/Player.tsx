@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import posed from 'react-pose';
 import { useTracked, actions } from 'state';
@@ -22,11 +22,9 @@ const getTransformString = (styleObj: any) => {
     };
 
     let transform = '';
-
     for (let key in properties) {
         transform = `${transform}${key}${properties[key]} `;
     }
-
     return transform.trim();
 };
 
@@ -42,7 +40,8 @@ const Player: React.FC<Props> = ({
     i,
 }) => {
     const [{ activePlayerId, mouseOverPlayerId, playersVisible }, dispatch]: any = useTracked();
-    const [dragging, setDragging] = useState(false); // <-- added dragging state
+    const [dragging, setDragging] = useState(false);
+    const rootRef = useRef<HTMLDivElement>(null);
 
     let pose = playersVisible ? 'visible' : 'hidden';
     const name = firstName ? `${firstName} ${lastName}` : lastName;
@@ -56,20 +55,69 @@ const Player: React.FC<Props> = ({
         pose = 'hover';
     }
 
+    // ===== Drag handlers =====
+    const handleDragStart = () => setDragging(true);
+    const handleDragEnd = () => setDragging(false);
+
+    const handleDragMove = (event: MouseEvent | TouchEvent) => {
+        if (!rootRef.current || !rootRef.current.parentElement) return;
+
+        // get clientX/Y
+        let clientX = 0;
+        let clientY = 0;
+
+        if ('touches' in event && event.touches.length > 0) {
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else if ('clientX' in event) {
+            clientX = event.clientX;
+            clientY = event.clientY;
+        }
+
+        const rect = rootRef.current.parentElement.getBoundingClientRect();
+        const newX = ((clientX - rect.left) / rect.width) * 100;
+        const newY = ((clientY - rect.top) / rect.height) * 100;
+
+        rootRef.current.style.left = newX + "%";
+        rootRef.current.style.top = newY + "%";
+    };
+
+    // Attach document listeners while dragging
+    useEffect(() => {
+        if (!dragging) return;
+
+        const onMouseMove = (e: MouseEvent) => handleDragMove(e);
+        const onTouchMove = (e: TouchEvent) => handleDragMove(e);
+        const onMouseUp = () => handleDragEnd();
+        const onTouchEnd = () => handleDragEnd();
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchend', onTouchEnd);
+
+        return () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.removeEventListener('touchend', onTouchEnd);
+        };
+    }, [dragging]);
+
     return (
         <Root
-            id={`player-${id}`}
+            ref={rootRef}
             i={i}
             x={x}
             y={y}
             active={activePlayerId === id}
             focusing={activePlayerId}
             mouseOver={mouseOverPlayerId === id}
-            dragging={dragging} // <-- pass dragging
+            dragging={dragging}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            onMouseDown={() => setDragging(true)} // start dragging
-            onMouseUp={() => setDragging(false)} // stop dragging
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
             onClick={handleClick}
             visible={playersVisible}
         >
@@ -96,9 +144,10 @@ type PlayerType = {
     focusing: boolean;
     mouseOver: boolean;
     visible?: boolean;
-    dragging?: boolean; // <-- added dragging type
+    dragging?: boolean;
 };
 
+// ===== Styles =====
 const playerInactiveStyles = css`
     opacity: 0.33;
 `;
@@ -162,7 +211,7 @@ const Root = styled.div<PlayerType>`
     transform-origin: 50% 0;
     transform: translateY(15%) ${getTransformString(defaultTransform)};
     opacity: ${(p) => (p.visible ? 1 : 0)};
-    transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')}; // <-- disable transition when dragging
+    transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')};
     transition-delay: ${(p) => (p.dragging ? 0 : p.i * 20)}ms;
 
     ${(p) => !p.visible && 'pointer-events: none;'}
