@@ -42,7 +42,7 @@ const Player: React.FC<Props> = ({
     i,
 }) => {
     const [{ activePlayerId, mouseOverPlayerId, playersVisible }, dispatch]: any = useTracked();
-    const [dragging, setDragging] = useState(false);
+    const [dragging, setDragging] = useState(false); // <-- added dragging state
 
     let pose = playersVisible ? 'visible' : 'hidden';
     const name = firstName ? `${firstName} ${lastName}` : lastName;
@@ -65,13 +65,13 @@ const Player: React.FC<Props> = ({
             active={activePlayerId === id}
             focusing={activePlayerId}
             mouseOver={mouseOverPlayerId === id}
-            dragging={dragging}
+            dragging={dragging} // <-- pass dragging
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            onMouseDown={() => setDragging(true)}
-            onMouseUp={() => setDragging(false)}
-            onTouchStart={() => setDragging(true)}
-            onTouchEnd={() => setDragging(false)}
+            onMouseDown={() => setDragging(true)} // start dragging
+            onMouseUp={() => setDragging(false)} // stop dragging
+            onTouchStart={() => setDragging(true)} // start dragging on touch
+            onTouchEnd={() => setDragging(false)} // stop dragging on touch
             onClick={handleClick}
             visible={playersVisible}
         >
@@ -98,7 +98,7 @@ type PlayerType = {
     focusing: boolean;
     mouseOver: boolean;
     visible?: boolean;
-    dragging?: boolean;
+    dragging?: boolean; // <-- added dragging type
 };
 
 const playerInactiveStyles = css`
@@ -164,7 +164,7 @@ const Root = styled.div<PlayerType>`
     transform-origin: 50% 0;
     transform: translateY(15%) ${getTransformString(defaultTransform)};
     opacity: ${(p) => (p.visible ? 1 : 0)};
-    transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')};
+    transition: ${(p) => (p.dragging ? 'none' : 'all 600ms')}; // <-- disable transition when dragging
     transition-delay: ${(p) => (p.dragging ? 0 : p.i * 20)}ms;
     touch-action: none;
     user-select: none;
